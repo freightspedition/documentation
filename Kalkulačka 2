@@ -1,0 +1,74 @@
+<div style="max-width:600px;margin:auto;font-family:sans-serif">
+  <h2>Kalkulačka ceny přepravy</h2>
+
+  <label>Výchozí adresa:<br>
+    <input id="origin" type="text" style="width:100%;padding:8px">
+  </label><br><br>
+
+  <label>Cílová adresa:<br>
+    <input id="destination" type="text" style="width:100%;padding:8px">
+  </label><br><br>
+
+  <label>Počet palet:<br>
+    <input id="pallets" type="number" value="1" min="1" style="width:100%;padding:8px">
+  </label><br><br>
+
+  <label>Hmotnost (kg):<br>
+    <input id="weight" type="number" min="0" style="width:100%;padding:8px">
+  </label><br><br>
+
+  <label><input type="checkbox" id="express"> Expres přeprava (+30%)</label><br>
+  <label><input type="checkbox" id="adr"> ADR přeprava (+15%)</label><br><br>
+
+  <button onclick="calculatePrice()" style="padding:10px 20px;font-size:16px">Spočítat cenu</button>
+
+  <p id="distance" style="margin-top:20px;font-weight:bold"></p>
+  <p id="result" style="font-weight:bold"></p>
+</div>
+
+<script>
+  function calculatePrice() {
+    const origin = document.getElementById("origin").value;
+    const destination = document.getElementById("destination").value;
+    const pallets = parseInt(document.getElementById("pallets").value);
+    const express = document.getElementById("express").checked;
+    const adr = document.getElementById("adr").checked;
+
+    if (!origin || !destination || pallets < 1) {
+      alert("Vyplňte prosím všechny údaje správně.");
+      return;
+    }
+
+    const service = new google.maps.DirectionsService();
+    service.route({
+      origin: origin,
+      destination: destination,
+      travelMode: google.maps.TravelMode.DRIVING
+    }, function(response, status) {
+      if (status === 'OK') {
+        const leg = response.routes[0].legs[0];
+        const distanceKm = leg.distance.value / 1000;
+        let basePrice = 8 * distanceKm;
+
+        if (pallets > 1) {
+          basePrice += 1100 * (pallets - 1);
+        }
+
+        if (express) basePrice *= 1.30;
+        if (adr) basePrice *= 1.15;
+
+        document.getElementById("distance").textContent = 
+          `Vzdálenost: ${distanceKm.toFixed(2)} km`;
+
+        document.getElementById("result").textContent = 
+          `Cena přepravy: ${basePrice.toFixed(2)} Kč`;
+      } else {
+        alert("Nepodařilo se zjistit trasu. Zkontrolujte adresy.");
+      }
+    });
+  }
+</script>
+
+<script async
+  src="https://maps.googleapis.com/maps/api/js?key=TVUJ_API_KLIC&libraries=places">
+</script>
